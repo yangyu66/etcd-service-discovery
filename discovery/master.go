@@ -3,9 +3,10 @@ package discovery
 import (
 	"context"
 	"encoding/json"
-	client "github.com/coreos/etcd/clientv3"
 	"log"
 	"time"
+
+	client "github.com/coreos/etcd/clientv3"
 )
 
 // Member is a client machine
@@ -42,7 +43,6 @@ func NewMaster(endpoints []string) *Master {
 		members: make(map[string]*Member),
 		API:     etcdClient,
 	}
-
 	return master
 }
 
@@ -55,17 +55,19 @@ func (master *Master) WatchWorkers() {
 	for wresp := range watcherCh {
 		for _, ev := range wresp.Events {
 			key := string(ev.Kv.Key)
+			log.Println("key: ", key)
 			if ev.Type.String() == "PUT" { // put 方法
 				info := NodeToWorkerInfo(ev.Kv.Value)
+				log.Println("info: ", info)
 				if _, ok := master.members[key]; ok {
 					log.Println("Update worker ", info.Name)
-					master.UpdateWorker(key,info)
+					master.UpdateWorker(key, info)
 				} else {
 					log.Println("Add worker ", info.Name)
 					master.AddWorker(key, info)
 				}
 
-			} else if ev.Type.String() == "DELETE" {  // del 方法
+			} else if ev.Type.String() == "DELETE" { // del 方法
 				log.Println("Delete worker ", key)
 				delete(master.members, key)
 			}
@@ -74,8 +76,7 @@ func (master *Master) WatchWorkers() {
 
 }
 
-
-func (master *Master) AddWorker(key string,info *WorkerInfo) {
+func (master *Master) AddWorker(key string, info *WorkerInfo) {
 	member := &Member{
 		InGroup: true,
 		IP:      info.IP,
@@ -99,13 +100,3 @@ func NodeToWorkerInfo(value []byte) *WorkerInfo {
 	}
 	return info
 }
-
-
-
-
-
-
-
-
-
-
